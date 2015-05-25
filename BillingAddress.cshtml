@@ -1,0 +1,375 @@
+﻿@model CheckoutBillingAddressModel
+@using SmartStore.Core.Domain.Orders;
+@using SmartStore.Web.Models.Checkout;
+@using SmartStore.Web.Models.Common;
+@{
+    Layout = "~/Views/Shared/_Checkout.cshtml";
+
+    //title
+    Html.AddTitleParts(T("PageTitle.Checkout").Text);
+}
+@section orderProgress{
+    @Html.Action("CheckoutProgress", "Checkout", new { step = CheckoutProgressStep.Address })
+}
+
+<div class="page billing-address-page">
+    <div class="page-title">
+        <h1>@T("Checkout.BillingAddress")</h1>
+    </div>
+    <div class="page-body checkout-data">
+        @Html.Widget("checkout_billing_address_top")
+        @if (Model.ExistingAddresses.Count > 0)
+        {
+            <div class="block">
+                <div class="block-title">
+                    @T("Checkout.SelectBillingAddress")
+                </div>
+                <div class="block-body address-grid">
+                    @(Html.DataList<AddressModel>(Model.ExistingAddresses, 3,
+                    @<div class="item-box">
+                        <div class="address-item">
+                            
+                            <div class="select-button">
+                                <button class="btn btn-block select-billing-address-button" data-id="@item.Id">
+                                    @T("Checkout.BillToThisAddress")
+                                </button>
+                            </div>
+
+                            <div class="address-box" data-equalized-part="address-box" data-id="@item.Id">
+                                <div class="name">
+                                    <strong>@item.FirstName @item.LastName</strong>
+                                </div>
+                                <div class="email">@T("Address.Fields.Email"): @item.Email</div>
+                                @if (item.PhoneEnabled)
+                                {
+                                    <div class="phone">
+                                        @T("Address.Fields.PhoneNumber"):
+                                         @item.PhoneNumber
+                                    </div>
+                                }
+                                @if (item.FaxEnabled && !String.IsNullOrEmpty(item.FaxNumber))
+                                {
+                                    <div class="fax">
+                                        @T("Address.Fields.FaxNumber"):
+                                         @item.FaxNumber
+                                    </div>
+                                }
+                                @if (item.CompanyEnabled && !String.IsNullOrEmpty(item.Company))
+                                {
+                                    <div class="company">
+                                        @item.Company
+                                    </div>
+                                }
+                                @if (item.StreetAddressEnabled)
+                                {
+                                    <div class="address1">
+                                        @item.Address1
+                                    </div>
+                                }
+                                @if (item.StreetAddress2Enabled && !String.IsNullOrEmpty(item.Address2))
+                                {
+                                    <div class="address2">
+                                        @item.Address2
+                                    </div>
+                                }
+                                @if (item.CityEnabled || item.StateProvinceEnabled || item.ZipPostalCodeEnabled)
+                                {
+                                    <div class="city-state-zip">
+                                        @if (item.CityEnabled)
+                                        {
+                                            @item.City
+                                        }
+                                        @if (item.CityEnabled && (item.StateProvinceEnabled || item.ZipPostalCodeEnabled))
+                                        {
+                                            <text>,</text>
+                                        }
+                                        @if (item.StateProvinceEnabled)
+                                        {
+                                            @item.StateProvinceName
+                                        }
+                                        @if (item.ZipPostalCodeEnabled)
+                                        {
+                                            @item.ZipPostalCode
+                                        }
+                                    </div>
+                                }
+                                @if (item.CountryEnabled && !String.IsNullOrEmpty(item.CountryName))
+                                {
+                                    <div class="country">
+                                        @item.CountryName
+                                    </div>
+                                }
+
+                            </div>
+                        </div>
+                    </div>
+                    ))
+                </div>
+            </div>
+        }
+        @Html.Widget("checkout_billing_address_middle")
+        <div class="block">
+            <div class="block-title">
+                
+                    @if (Model.ExistingAddresses.Count > 0)
+                    {
+                        @T("Checkout.OrEnterNewAddress")
+                    }
+                    else
+                    {
+                        @T("Checkout.EnterBillingAddress")
+                    }
+                
+            </div>
+            <div class="block-body">
+                <div class="enter-address">
+                    @using (Html.BeginForm())
+                    {
+                        <div class="enter-address-body">
+                            @{
+                                var dataDictAddress = new ViewDataDictionary();
+                                //Merge ModelState (required for validation)
+                                dataDictAddress.ModelState.Merge(ViewData.ModelState);
+                                dataDictAddress.TemplateInfo.HtmlFieldPrefix = "NewAddress";
+                                @Html.Partial("_CreateOrUpdateAddress", Model.NewAddress, dataDictAddress)              
+                            }
+                        </div>
+                
+                        <div class="buttons clearfix">
+                            <a class="btn pull-left" href="@Url.RouteUrl("ShoppingCart")">
+                                <i class="fa fa-caret-left"></i>&nbsp;
+                                @T("Common.Back")
+                            </a>    
+                            <input type="submit" id="nextstep" name="nextstep" style="display:none" />
+
+                            <button class="btn btn-warning pull-right new-address-next-step-button">
+                                @T("Checkout.NextButton")
+                                &nbsp;<i class="fa fa-caret-right"></i>
+                            </button>
+                        </div>
+                    }
+                </div>
+             </div>
+        </div>
+        @Html.Widget("checkout_billing_address_bottom")
+    </div>
+    
+    @*<div class="order-summary-title">
+        @T("Checkout.OrderSummary")
+    </div>
+    <div class="order-summary-body">
+        @Html.Action("OrderSummary", "ShoppingCart")
+    </div>*@
+</div>
+
+<style type="text/css">
+	.dark-background {
+		display: none;
+	  position: fixed;
+	  top: 0;
+	  left: 0;
+	  bottom: 0;
+	  right: 0;
+	  background-color: rgba(0,0,0,.4);
+	  z-index: 1031;
+	}
+
+	.phone-modal {
+		position: fixed;
+		top: 100px;
+		left: calc(50% - 280px);
+	  z-index: 1050;
+	  width: 560px;
+	  /* margin: -250px 0 0 -280px; */
+	  background-color: #ffffff;
+	  border: 1px solid #999;
+	  border: 1px solid rgba(0, 0, 0, 0.3);
+	  border-radius: 6px;
+	  -webkit-box-shadow: 0 3px 7px rgba(0, 0, 0, 0.3);
+	  box-shadow: 0 3px 7px rgba(0, 0, 0, 0.3);
+	  -webkit-background-clip: padding-box;
+	  -moz-background-clip: padding-box;
+	  background-clip: padding-box;
+	  outline: none;
+	}
+
+	#phone-verify-container {
+		padding: 20px;
+		margin-bottom: 20px;
+	}
+	
+	#phone-verify-container .btn {
+		vertical-align: top;
+	}
+	
+	#phone-verify-container .btn.done {
+		display: block;
+		margin-top: 20px;
+	}
+	
+	#phone-verify-container .header {
+		font-size: 16px;
+		font-weight: bold;
+		margin-bottom: 5px;
+		display: block;
+	}
+	
+	#phone-verify-container .warning, #phone-verify-container .nexmo-warning {
+		display: none;
+		color: #cc2323;
+		font-weight: bold;
+		font-size: 16px;
+		margin-top: 5px;
+	}
+	
+	#phone-verify-container .step2, #phone-verify-container .step3 {
+		display: none;
+	}
+	
+	.success {
+		color: '#006400';
+		font-weight: bold;
+		font-size: 16px;
+		margin-top: 5px;
+	}
+</style>
+<div class="dark-background">
+	<div class="phone-modal">
+		<div id="phone-verify-container">
+			<div class="step1">
+				<span class="header">Verify Your Phone Number:</span>
+				<input type="text" id="phonenumber" readonly style="padding-left: 5px;" />
+				<button id="nexmo-verify" class="btn" type="button">Verify</button>
+				<button id="nexmo-cancel" class="btn" type="button">Cancel</button>
+			</div>
+			<div class="step2">
+				<span class="header">Enter The Verification Code Sent To Your Phone:</span>
+				<input type="text" id="nexmo-received-code" />
+				<button id="nexmo-confirm" class="btn" type="button">Confirm</button>
+			</div>
+			<div class="step3">
+				<span class="success">Thanks! We've verified your phone number.  You may now continue the checkout process.</span>
+				<button id="nexmo-done" class="btn done" type="button">Continue</button>
+			</div>
+			<span class="warning">* Please verify your phone number</span>
+			<span class="nexmo-warning">* There was an issue verifying your phone number</span>
+		</div>
+	</div>
+</div>
+
+<script type="text/javascript">
+	var requestId = "";
+	var clickedButton = "";
+	var existingAddressId = "";
+	var country = "";
+	var newAddressClickHandler = "$('#nextstep').trigger('click');";
+	var selectAddressClickHandler = "setLocation('/shop/checkout/SelectBillingAddress?addressId=";
+	
+	$(document).ready(function() {
+		// verify phone with Nexmo before continuing
+		$('.new-address-next-step-button, .select-billing-address-button').click(function(e) {
+			e.preventDefault();
+			if ($(this).is('.select-billing-address-button')) {
+				clickedButton = "Existing";
+				existingAddressId = $(this).data('id');
+				$('#phonenumber').val($('.address-box[data-id="' + $(this).data('id') +'"]').find('.phone').text().replace('Phone number:', '').replace(/\s+/g,''));
+				country = $('.address-box[data-id="' + $(this).data('id') + '"]').find('.country').text().replace(/\s+/g,'');
+			}
+			else {
+				clickedButton = "New";
+				$('#phonenumber').val($('#NewAddress_PhoneNumber').val());
+				country = $('#s2id_NewAddress_CountryId > span').val();
+			}
+			
+			$('.dark-background').fadeIn(200);
+		});
+		
+		$('.dark-background #nexmo-cancel').click(function(e) {
+			e.preventDefault();
+			$('.dark-background').fadeOut(200);
+		});
+		
+		// verify button
+		$('#nexmo-verify').click(function(e) {
+			e.preventDefault();
+			
+			$('#nexmo-verify').attr('disabled', 'disabled');
+			$('#nexmo-cancel').attr('disabled', 'disabled');
+			$('#phone-verify-container .warning').hide();
+			$('#phone-verify-container .nexmo-warning').hide();
+			
+			var phone = $('#phonenumber').val();
+			var countryCode = getCountryCode(country);
+			
+			$.get('/services/api/nexmo/verify?phone=' + countryCode + phone, function(result) {
+				if (result != null) {
+					if (result.status === "0") {
+						requestId = result.request_id;
+						$('.step1').fadeOut(500, function() {
+							$('.step2').fadeIn(500);
+						});
+					}
+					else {
+						$('#nexmo-verify').removeAttr('disabled');
+						$('#nexmo-cancel').removeAttr('disabled');
+						$('#phone-verify-container .nexmo-warning').attr('display', 'block');
+					}
+				}
+				else {
+					$('#nexmo-verify').removeAttr('disabled');
+					$('#nexmo-cancel').removeAttr('disabled');
+					$('#phone-verify-container .nexmo-warning').attr('display', 'block');
+				}
+			});
+		});
+			
+		// confirm button
+		$('#nexmo-confirm').click(function(e) {
+			e.preventDefault();
+			
+			$('#nexmo-confirm').attr('disabled', 'disabled');
+			
+			var code = $('#nexmo-received-code').val();
+			$.get('/services/api/nexmo/check?requestId=' + requestId + '&code=' + code, function(result) {
+				if (result != null) {
+					if (result.status === "0") {
+						$('.step2').fadeOut(500, function() {
+							$('.step3').fadeIn(500);
+							$('.dark-background #nexmo-done').click(function(e) {
+								if (clickedButton === "Existing") {
+									setLocation('/shop/checkout/SelectBillingAddress?addressId=' + existingAddressId);
+								}
+								else {
+									$('#nextstep').trigger('click');
+								}
+							});
+						});
+					}
+					else {
+						$('#nexmo-confirm').removeAttr('disabled');
+						$('#phone-verify-container .nexmo-warning').attr('display', 'block');
+					}
+				}
+				else {
+					$('#nexmo-confirm').removeAttr('disabled');
+					$('#phone-confirm-container .nexmo-warning').attr('display', 'block');
+				}
+			});
+		});
+	});
+
+	function getCountryCode(country) {
+		var result = "1";
+		var codes = JSON.parse('[{"Name":"Afghanistan","Code":"93"},{"Name":"Albania","Code":"355"},{"Name":"Algeria","Code":"213"},{"Name":"American Samoa","Code":"1684"},{"Name":"Andorra","Code":"376"},{"Name":"Angola","Code":"244"},{"Name":"Anguilla","Code":"1264"},{"Name":"Antarctica","Code":"672"},{"Name":"Antigua and Barbuda","Code":"1268"},{"Name":"Argentina","Code":"54"},{"Name":"Armenia","Code":"374"},{"Name":"Aruba","Code":"297"},{"Name":"Australia","Code":"61"},{"Name":"Austria","Code":"43"},{"Name":"Azerbaijan","Code":"994"},{"Name":"Bahamas","Code":"1242"},{"Name":"Bahrain","Code":"973"},{"Name":"Bangladesh","Code":"880"},{"Name":"Barbados","Code":"1246"},{"Name":"Belarus","Code":"375"},{"Name":"Belgium","Code":"32"},{"Name":"Belize","Code":"501"},{"Name":"Benin","Code":"229"},{"Name":"Bermuda","Code":"1441"},{"Name":"Bhutan","Code":"975"},{"Name":"Bolivia","Code":"591"},{"Name":"Bosnia and Herzegovina","Code":"387"},{"Name":"Botswana","Code":"267"},{"Name":"Brazil","Code":"55"},{"Name":"British Indian Ocean Territory","Code":"246"},{"Name":"British Virgin Islands","Code":"1284"},{"Name":"Brunei","Code":"673"},{"Name":"Bulgaria","Code":"359"},{"Name":"Burkina Faso","Code":"226"},{"Name":"Burundi","Code":"257"},{"Name":"Cambodia","Code":"855"},{"Name":"Cameroon","Code":"237"},{"Name":"Canada","Code":"1"},{"Name":"Cape Verde","Code":"238"},{"Name":"Cayman Islands","Code":"1345"},{"Name":"Central African Republic","Code":"236"},{"Name":"Chad","Code":"235"},{"Name":"Chile","Code":"56"},{"Name":"China","Code":"86"},{"Name":"Christmas Island","Code":"61"},{"Name":"Cocos Islands","Code":"61"},{"Name":"Colombia","Code":"57"},{"Name":"Comoros","Code":"269"},{"Name":"Cook Islands","Code":"682"},{"Name":"Costa Rica","Code":"506"},{"Name":"Croatia","Code":"385"},{"Name":"Cuba","Code":"53"},{"Name":"Curacao","Code":"599"},{"Name":"Cyprus","Code":"357"},{"Name":"Czech Republic","Code":"420"},{"Name":"Democratic Republic of the Congo","Code":"243"},{"Name":"Denmark","Code":"45"},{"Name":"Djibouti","Code":"253"},{"Name":"Dominica","Code":"1767"},{"Name":"Dominican Republic","Code":"1809, 1829, 1849"},{"Name":"East Timor","Code":"670"},{"Name":"Ecuador","Code":"593"},{"Name":"Egypt","Code":"20"},{"Name":"El Salvador","Code":"503"},{"Name":"Equatorial Guinea","Code":"240"},{"Name":"Eritrea","Code":"291"},{"Name":"Estonia","Code":"372"},{"Name":"Ethiopia","Code":"251"},{"Name":"Falkland Islands","Code":"500"},{"Name":"Faroe Islands","Code":"298"},{"Name":"Fiji","Code":"679"},{"Name":"Finland","Code":"358"},{"Name":"France","Code":"33"},{"Name":"French Polynesia","Code":"689"},{"Name":"Gabon","Code":"241"},{"Name":"Gambia","Code":"220"},{"Name":"Georgia","Code":"995"},{"Name":"Germany","Code":"49"},{"Name":"Ghana","Code":"233"},{"Name":"Gibraltar","Code":"350"},{"Name":"Greece","Code":"30"},{"Name":"Greenland","Code":"299"},{"Name":"Grenada","Code":"1473"},{"Name":"Guam","Code":"1671"},{"Name":"Guatemala","Code":"502"},{"Name":"Guernsey","Code":"441481"},{"Name":"Guinea","Code":"224"},{"Name":"GuineaBissau","Code":"245"},{"Name":"Guyana","Code":"592"},{"Name":"Haiti","Code":"509"},{"Name":"Honduras","Code":"504"},{"Name":"Hong Kong","Code":"852"},{"Name":"Hungary","Code":"36"},{"Name":"Iceland","Code":"354"},{"Name":"India","Code":"91"},{"Name":"Indonesia","Code":"62"},{"Name":"Iran","Code":"98"},{"Name":"Iraq","Code":"964"},{"Name":"Ireland","Code":"353"},{"Name":"Isle of Man","Code":"441624"},{"Name":"Israel","Code":"972"},{"Name":"Italy","Code":"39"},{"Name":"Ivory Coast","Code":"225"},{"Name":"Jamaica","Code":"1876"},{"Name":"Japan","Code":"81"},{"Name":"Jersey","Code":"441534"},{"Name":"Jordan","Code":"962"},{"Name":"Kazakhstan","Code":"7"},{"Name":"Kenya","Code":"254"},{"Name":"Kiribati","Code":"686"},{"Name":"Kosovo","Code":"383"},{"Name":"Kuwait","Code":"965"},{"Name":"Kyrgyzstan","Code":"996"},{"Name":"Laos","Code":"856"},{"Name":"Latvia","Code":"371"},{"Name":"Lebanon","Code":"961"},{"Name":"Lesotho","Code":"266"},{"Name":"Liberia","Code":"231"},{"Name":"Libya","Code":"218"},{"Name":"Liechtenstein","Code":"423"},{"Name":"Lithuania","Code":"370"},{"Name":"Luxembourg","Code":"352"},{"Name":"Macao","Code":"853"},{"Name":"Macedonia","Code":"389"},{"Name":"Madagascar","Code":"261"},{"Name":"Malawi","Code":"265"},{"Name":"Malaysia","Code":"60"},{"Name":"Maldives","Code":"960"},{"Name":"Mali","Code":"223"},{"Name":"Malta","Code":"356"},{"Name":"Marshall Islands","Code":"692"},{"Name":"Mauritania","Code":"222"},{"Name":"Mauritius","Code":"230"},{"Name":"Mayotte","Code":"262"},{"Name":"Mexico","Code":"52"},{"Name":"Micronesia","Code":"691"},{"Name":"Moldova","Code":"373"},{"Name":"Monaco","Code":"377"},{"Name":"Mongolia","Code":"976"},{"Name":"Montenegro","Code":"382"},{"Name":"Montserrat","Code":"1664"},{"Name":"Morocco","Code":"212"},{"Name":"Mozambique","Code":"258"},{"Name":"Myanmar","Code":"95"},{"Name":"Namibia","Code":"264"},{"Name":"Nauru","Code":"674"},{"Name":"Nepal","Code":"977"},{"Name":"Netherlands","Code":"31"},{"Name":"Netherlands Antilles","Code":"599"},{"Name":"New Caledonia","Code":"687"},{"Name":"New Zealand","Code":"64"},{"Name":"Nicaragua","Code":"505"},{"Name":"Niger","Code":"227"},{"Name":"Nigeria","Code":"234"},{"Name":"Niue","Code":"683"},{"Name":"North Korea","Code":"850"},{"Name":"Northern Mariana Islands","Code":"1670"},{"Name":"Norway","Code":"47"},{"Name":"Oman","Code":"968"},{"Name":"Pakistan","Code":"92"},{"Name":"Palau","Code":"680"},{"Name":"Palestine","Code":"970"},{"Name":"Panama","Code":"507"},{"Name":"Papua New Guinea","Code":"675"},{"Name":"Paraguay","Code":"595"},{"Name":"Peru","Code":"51"},{"Name":"Philippines","Code":"63"},{"Name":"Pitcairn","Code":"64"},{"Name":"Poland","Code":"48"},{"Name":"Portugal","Code":"351"},{"Name":"Puerto Rico","Code":"1787, 1939"},{"Name":"Qatar","Code":"974"},{"Name":"Republic of the Congo","Code":"242"},{"Name":"Reunion","Code":"262"},{"Name":"Romania","Code":"40"},{"Name":"Russia","Code":"7"},{"Name":"Rwanda","Code":"250"},{"Name":"Saint Barthelemy","Code":"590"},{"Name":"Saint Helena","Code":"290"},{"Name":"Saint Kitts and Nevis","Code":"1869"},{"Name":"Saint Lucia","Code":"1758"},{"Name":"Saint Martin","Code":"590"},{"Name":"Saint Pierre and Miquelon","Code":"508"},{"Name":"Saint Vincent and the Grenadines","Code":"1784"},{"Name":"Samoa","Code":"685"},{"Name":"San Marino","Code":"378"},{"Name":"Sao Tome and Principe","Code":"239"},{"Name":"Saudi Arabia","Code":"966"},{"Name":"Senegal","Code":"221"},{"Name":"Serbia","Code":"381"},{"Name":"Seychelles","Code":"248"},{"Name":"Sierra Leone","Code":"232"},{"Name":"Singapore","Code":"65"},{"Name":"Sint Maarten","Code":"1721"},{"Name":"Slovakia","Code":"421"},{"Name":"Slovenia","Code":"386"},{"Name":"Solomon Islands","Code":"677"},{"Name":"Somalia","Code":"252"},{"Name":"South Africa","Code":"27"},{"Name":"South Korea","Code":"82"},{"Name":"South Sudan","Code":"211"},{"Name":"Spain","Code":"34"},{"Name":"Sri Lanka","Code":"94"},{"Name":"Sudan","Code":"249"},{"Name":"Suriname","Code":"597"},{"Name":"Svalbard and Jan Mayen","Code":"47"},{"Name":"Swaziland","Code":"268"},{"Name":"Sweden","Code":"46"},{"Name":"Switzerland","Code":"41"},{"Name":"Syria","Code":"963"},{"Name":"Taiwan","Code":"886"},{"Name":"Tajikistan","Code":"992"},{"Name":"Tanzania","Code":"255"},{"Name":"Thailand","Code":"66"},{"Name":"Togo","Code":"228"},{"Name":"Tokelau","Code":"690"},{"Name":"Tonga","Code":"676"},{"Name":"Trinidad and Tobago","Code":"1868"},{"Name":"Tunisia","Code":"216"},{"Name":"Turkey","Code":"90"},{"Name":"Turkmenistan","Code":"993"},{"Name":"Turks and Caicos Islands","Code":"1649"},{"Name":"Tuvalu","Code":"688"},{"Name":"U.S. Virgin Islands","Code":"1340"},{"Name":"Uganda","Code":"256"},{"Name":"Ukraine","Code":"380"},{"Name":"United Arab Emirates","Code":"971"},{"Name":"United Kingdom","Code":"44"},{"Name":"United States","Code":"1"},{"Name":"Uruguay","Code":"598"},{"Name":"Uzbekistan","Code":"998"},{"Name":"Vanuatu","Code":"678"},{"Name":"Vatican","Code":"379"},{"Name":"Venezuela","Code":"58"},{"Name":"Vietnam","Code":"84"},{"Name":"Wallis and Futuna","Code":"681"},{"Name":"Western Sahara","Code":"212"},{"Name":"Yemen","Code":"967"},{"Name":"Zambia","Code":"260"},{"Name":"Zimbabwe","Code":"263"}]');
+		
+		$(codes).each(function(idx, obj) {
+			if (obj.Name === country) {
+				result = obj.Code;
+				return false;
+			}
+		});
+		
+		return result;
+	}
+
+</script>
